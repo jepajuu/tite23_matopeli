@@ -65,6 +65,10 @@ class SnakeGame(QGraphicsView):
             self.score += 1
             self.snake.insert(0, new_head)
             self.place_food()  # Aseta uusi pallo
+            if self.score == self.level_limit:#Jos pisteet kasvaneet 5p nopeus kasvaa
+                self.level_limit += 5
+                self.timer_delay -= 50
+                self.timer.setInterval(self.timer_delay)
         else:
             self.snake.insert(0, new_head)
             self.snake.pop()
@@ -129,7 +133,10 @@ class SnakeGame(QGraphicsView):
         self.direction = Qt.Key_Right
         self.snake = [(5, 5), (5, 6), (5, 7)]
         self.place_food()  # Aseta ensimmäinen pallo
-        self.timer.start(300)
+        # for levels
+        self.level_limit = 5#maara joiden valein nopeus kasvaa
+        self.timer_delay = 300#aloitus nopeus
+        self.timer.start(self.timer_delay)
 
 def main():
     app = QApplication(sys.argv)
