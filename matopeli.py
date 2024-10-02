@@ -26,15 +26,23 @@ class SnakeGame(QGraphicsView):
 
     def keyPressEvent(self, event):
         key = event.key()
-        # starting game by button
+
+        # Aloita peli, jos se ei ole vielä alkanut
         if not self.game_started:
-            if key == event.key():
+            if key not in (Qt.Key_Left, Qt.Key_Right, Qt.Key_Up, Qt.Key_Down):
                 self.game_started = True
                 self.scene().clear()
                 self.start_game()
+            return
 
+        # Jos peli on ohi, aloita uusi peli
+        if self.dead:
+            if key not in (Qt.Key_Left, Qt.Key_Right, Qt.Key_Up, Qt.Key_Down):
+                self.restart_game()
+            return
+
+        # Päivitetään suunta
         if key in (Qt.Key_Left, Qt.Key_Right, Qt.Key_Up, Qt.Key_Down):
-            # Päivitetään suunta vain jos se ei ole vastakkainen valitulle suunnalle
             if key == Qt.Key_Left and self.direction != Qt.Key_Right:
                 self.direction = key
             elif key == Qt.Key_Right and self.direction != Qt.Key_Left:
@@ -57,15 +65,15 @@ class SnakeGame(QGraphicsView):
             new_head = (head_x, head_y + 1)
 
         # Game over text
-        if (new_head in self.snake or new_head[0] >= GRID_WIDTH or new_head[0] <= -1 or new_head[1] >= GRID_HEIGHT or new_head[1] <= -1):
+        if (new_head in self.snake or new_head[0] >= GRID_WIDTH or new_head[0] < 0 or new_head[1] >= GRID_HEIGHT or new_head[1] < 0):
             self.dead = True
 
         # Tarkistetaan, syökö mato pallon
         if new_head == self.food:
             self.score += 1
             self.snake.insert(0, new_head)
-            self.place_food()  # Aseta uusi pallo
-            if self.score == self.level_limit:#Jos pisteet kasvaneet 5p nopeus kasvaa
+            self.place_food()
+            if self.score == self.level_limit:  # Jos pisteet kasvaneet 5p nopeus kasvaa
                 self.level_limit += 5
                 self.timer_delay -= 50
                 self.timer.setInterval(self.timer_delay)
@@ -77,16 +85,10 @@ class SnakeGame(QGraphicsView):
 
     def print_game(self):
         self.scene().clear()
-        
 
-        if (self.dead):
+        if self.dead:
             self.die()
-            self.timer.stop()
-       
-
-        if (self.dead):
-            self.die()
-            self.timer.stop()
+            return
 
         # Piirrä mato
         for segment in self.snake:
@@ -104,6 +106,10 @@ class SnakeGame(QGraphicsView):
         text_width = game_over_text.boundingRect().width()
         text_x = (self.width() - text_width) / 2
         game_over_text.setPos(text_x, GRID_HEIGHT * CELL_SIZE / 2)
+        
+        restart_text = self.scene().addText("Press any key to start new game", QFont("Arial", 18))
+        restart_text.setPos(text_x, GRID_HEIGHT * CELL_SIZE / 2 + 30)
+
         self.timer.stop()
 
     def init_screen(self):
@@ -112,13 +118,11 @@ class SnakeGame(QGraphicsView):
         text_x = (self.width() - text_width) / 5
         start_text.setPos(text_x, GRID_HEIGHT * CELL_SIZE / 2)
 
-    def die(self):
+    def restart_game(self):
+        self.game_started = True
         self.scene().clear()
-        game_over_text = self.scene().addText("Game Over", QFont("Arial", 24))
-        text_width = game_over_text.boundingRect().width()
-        text_x = (self.width() - text_width) / 2
-        game_over_text.setPos(text_x, GRID_HEIGHT * CELL_SIZE / 2)
-        self.timer.stop()
+        self.score = 0
+        self.start_game()
 
     def place_food(self):
         while True:
@@ -134,8 +138,8 @@ class SnakeGame(QGraphicsView):
         self.snake = [(5, 5), (5, 6), (5, 7)]
         self.place_food()  # Aseta ensimmäinen pallo
         # for levels
-        self.level_limit = 5#maara joiden valein nopeus kasvaa
-        self.timer_delay = 300#aloitus nopeus
+        self.level_limit = 5  # määrä, joiden mukaan nopeus kasvaa
+        self.timer_delay = 300  # aloitusnopeus
         self.timer.start(self.timer_delay)
 
 def main():
