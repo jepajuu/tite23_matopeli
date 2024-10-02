@@ -20,11 +20,19 @@ class SnakeGame(QGraphicsView):
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_game)
         
-        self.start_game()
+        self.game_started = False
+        self.init_screen()
         self.score = 0
 
     def keyPressEvent(self, event):
         key = event.key()
+        # starting game by button
+        if not self.game_started:
+            if key == event.key():
+                self.game_started = True
+                self.scene().clear()
+                self.start_game()
+
         if key in (Qt.Key_Left, Qt.Key_Right, Qt.Key_Up, Qt.Key_Down):
             # Päivitetään suunta vain jos se ei ole vastakkainen valitulle suunnalle
             if key == Qt.Key_Left and self.direction != Qt.Key_Right:
@@ -72,6 +80,10 @@ class SnakeGame(QGraphicsView):
             self.timer.stop()
        
 
+        if (self.dead):
+            self.die()
+            self.timer.stop()
+
         # Piirrä mato
         for segment in self.snake:
             x, y = segment
@@ -81,6 +93,20 @@ class SnakeGame(QGraphicsView):
         food_x, food_y = self.food
         self.scene().addEllipse(food_x * CELL_SIZE, food_y * CELL_SIZE, CELL_SIZE, CELL_SIZE, QPen(Qt.red), QBrush(Qt.red))
         self.scene().addText(f"Score: {self.score}", QFont("Arial", 12)).setPos(10, 10)
+
+    def die(self):
+        self.scene().clear()
+        game_over_text = self.scene().addText("Game Over", QFont("Arial", 24))
+        text_width = game_over_text.boundingRect().width()
+        text_x = (self.width() - text_width) / 2
+        game_over_text.setPos(text_x, GRID_HEIGHT * CELL_SIZE / 2)
+        self.timer.stop()
+
+    def init_screen(self):
+        start_text = self.scene().addText("Press any key to start", QFont("Arial", 18))
+        text_width = start_text.boundingRect().width()
+        text_x = (self.width() - text_width) / 5
+        start_text.setPos(text_x, GRID_HEIGHT * CELL_SIZE / 2)
 
     def die(self):
         self.scene().clear()
