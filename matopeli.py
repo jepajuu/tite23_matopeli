@@ -1,7 +1,7 @@
 import sys
 import random
 from PySide6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene
-from PySide6.QtGui import QPainter, QPen, QBrush
+from PySide6.QtGui import QPainter, QPen, QBrush, QFont
 from PySide6.QtCore import Qt, QTimer
 
 # Vakiot
@@ -47,6 +47,10 @@ class SnakeGame(QGraphicsView):
         elif self.direction == Qt.Key_Down:
             new_head = (head_x, head_y + 1)
 
+        # Game over text
+        if (new_head in self.snake or new_head[0] >= GRID_WIDTH or new_head[0] <= -1 or new_head[1] >= GRID_HEIGHT or new_head[1] <= -1):
+            self.dead = True
+
         # Tarkistetaan, syökö mato pallon
         if new_head == self.food:
             self.snake.insert(0, new_head)
@@ -60,6 +64,10 @@ class SnakeGame(QGraphicsView):
     def print_game(self):
         self.scene().clear()
 
+        if (self.dead):
+            self.die()
+            self.timer.stop()
+
         # Piirrä mato
         for segment in self.snake:
             x, y = segment
@@ -68,6 +76,14 @@ class SnakeGame(QGraphicsView):
         # Piirrä pallo
         food_x, food_y = self.food
         self.scene().addEllipse(food_x * CELL_SIZE, food_y * CELL_SIZE, CELL_SIZE, CELL_SIZE, QPen(Qt.red), QBrush(Qt.red))
+
+    def die(self):
+        self.scene().clear()
+        game_over_text = self.scene().addText("Game Over", QFont("Arial", 24))
+        text_width = game_over_text.boundingRect().width()
+        text_x = (self.width() - text_width) / 2
+        game_over_text.setPos(text_x, GRID_HEIGHT * CELL_SIZE / 2)
+        self.timer.stop()
 
     def place_food(self):
         while True:
@@ -78,6 +94,7 @@ class SnakeGame(QGraphicsView):
                 break
 
     def start_game(self):
+        self.dead = False
         self.direction = Qt.Key_Right
         self.snake = [(5, 5), (5, 6), (5, 7)]
         self.place_food()  # Aseta ensimmäinen pallo
